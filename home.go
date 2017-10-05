@@ -6,18 +6,30 @@ import (
     "strings"
     "time"
     "fmt"
-    "log"
+    // "log"
 )
+
+
 
 //Pseudo-databse to store all the different users and accounts
 var users = make(map[string][]string)
+
+func renderHtml(htmlFile, goFile string, w http.ResponseWriter){
+	temp, _ := template.ParseFiles(htmlFile)
+	temp.Execute(w,goFile)
+}
+
+// func setCookie(username string, ) http.Cookie {
+
+// }
+
+// func deleteCookie(cookie )
 
 func signin(w http.ResponseWriter, r *http.Request) {
     if r.Method == "GET" {
 
     	//Render the page
-	    temp, _ := template.ParseFiles("signin.html")
-	    temp.Execute(w,"home.go")
+    	renderHtml("signin.html", "home.go", w)
 
 	} else {
 		r.ParseForm()
@@ -48,39 +60,18 @@ func signin(w http.ResponseWriter, r *http.Request) {
 func profile(w http.ResponseWriter, r *http.Request) {
 
 	//Render the page
-    temp, _ := template.ParseFiles("profile.html")
-    temp.Execute(w,"home.go")
+    renderHtml("profile.html", "home.go", w)
 
     userN, _ := r.Cookie("username")
     nameP := users[userN.Value][1]
-	// fmt.Fprintf(w,"Welcome ", nameP)
-	fmt.Println(nameP)
-
-	if r.Method == "POST" {
-		r.ParseForm()
-
-		//User is trying to logout of their account
-		if(strings.Join(r.Form["logout"], " ") == "Logout") {
-
-			//Delete the cookie information
-			c, _ := r.Cookie("username")
-			c.Value = ""
-			c.Path = "/"
-			c.MaxAge = -1
-			http.SetCookie(w,c)
-
-			//issue rises
-			http.Redirect(w, r, "/signin", http.StatusTemporaryRedirect)
-		}
-	}
+	fmt.Fprintf(w,"Welcome ", nameP)
 }
 
 func signup(w http.ResponseWriter, r *http.Request) {
     if r.Method == "GET" {
 
     	//Render the page
-	    temp, _ := template.ParseFiles("signup.html")
-	    temp.Execute(w,"home.go")
+	    renderHtml("signup.html", "home.go", w)
 
 	} else {
 		r.ParseForm()
@@ -101,9 +92,19 @@ func signup(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func logout(w http.ResponseWriter, r *http.Request) {
+	c, _ := r.Cookie("username")
+	c.Value = ""
+	c.Path = "/"
+	c.MaxAge = -1
+	http.SetCookie(w,c)
+	http.Redirect(w,r,"/signin",http.StatusPermanentRedirect)
+}
+
 func main() {
     http.HandleFunc("/signin", signin)
     http.HandleFunc("/signup", signup)
     http.HandleFunc("/profile", profile)
+    http.HandleFunc("/logout", logout)
     http.ListenAndServe(":8080", nil)
 }
